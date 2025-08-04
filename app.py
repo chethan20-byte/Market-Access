@@ -18,19 +18,23 @@ from datetime import timedelta
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 from sklearn.metrics import mean_absolute_error, mean_squared_error
+import os
 
 # Load Data (from split files)
 @st.cache_data
 def load_data():
-    part1 = pd.read_csv(r"C:\Users\chethan\Desktop\Market Access\split_part1.csv")
-    part2 = pd.read_csv(r"C:\Users\chethan\Desktop\Market Access\split_part2.csv")
+    if not os.path.exists("split_part1.csv") or not os.path.exists("split_part2.csv"):
+        st.error("Data files not found. Please make sure 'split_part1.csv' and 'split_part2.csv' are in the same folder as this app.")
+        st.stop()
+    part1 = pd.read_csv("split_part1.csv")
+    part2 = pd.read_csv("split_part2.csv")
     df = pd.concat([part1, part2], ignore_index=True)
     df['date'] = pd.to_datetime(df['date'], format='%d-%m-%Y')
     return df
 
 data = load_data()
 
-st.title("🚜 AI Market Access & Transport Optimizer for  Farmers")
+st.title("🚜 AI Market Access & Transport Optimizer for Farmers")
 
 # Sidebar - User Input
 st.sidebar.header("Select Your District and Crop")
@@ -48,11 +52,9 @@ st.subheader(f"📈 Price Forecast for {selected_crop} in {selected_district}")
 selected_data['ds'] = pd.to_datetime(selected_data['date'])
 selected_data['y'] = selected_data['price']
 
-# Allow year selection up to 2050
 selected_year = st.selectbox("Select forecast year (up to 2050)", list(range(2025, 2051)))
 future_days = (pd.Timestamp(f"{selected_year}-12-31") - selected_data['ds'].max()).days
 
-# Add extra regressors if available
 regressors = []
 if 'rainfall' in selected_data.columns:
     regressors.append('rainfall')
@@ -67,7 +69,6 @@ for reg in regressors:
 
 model.fit(selected_data[['ds', 'y'] + regressors])
 
-# Future DataFrame
 future = pd.date_range(start=selected_data['ds'].max() + timedelta(days=1), periods=future_days)
 future_df = pd.DataFrame({'ds': future})
 
@@ -139,19 +140,25 @@ st.plotly_chart(fig, use_container_width=True)
 st.subheader("🚚 Suggested Transport Route")
 st.markdown("_(Using OpenRouteService)_")
 
-location_data = pd.read_csv(r"C:\Users\chethan\Desktop\Market Access\karnataka_district_mandis2.csv")
-mandi_location = location_data[location_data['district'] == selected_district].iloc[0]
-lat, lon = mandi_location['latitude'], mandi_location['longitude']
+if os.path.exists("karnataka_district_mandis2.csv"):
+    location_data = pd.read_csv("karnataka_district_mandis2.csv")
+    mandi_location = location_data[location_data['district'] == selected_district].iloc[0]
+    lat, lon = mandi_location['latitude'], mandi_location['longitude']
 
-m = folium.Map(location=[lat, lon], zoom_start=10)
-folium.Marker([lat, lon], popup=f"{selected_district} Mandi", tooltip="Recommended Mandi", icon=folium.Icon(color='green')).add_to(m)
-folium_static(m)
+    m = folium.Map(location=[lat, lon], zoom_start=10)
+    folium.Marker([lat, lon], popup=f"{selected_district} Mandi", tooltip="Recommended Mandi", icon=folium.Icon(color='green')).add_to(m)
+    folium_static(m)
+else:
+    st.warning("⚠️ Mandi location file not found.")
 
 # Local Buyer Info
 st.subheader("🧑‍🌾 Local Buyers in Your District")
-buyers_df = pd.read_csv(r"C:\Users\chethan\Desktop\Market Access\karnataka_crop_buyers.csv")
-district_buyers = buyers_df[(buyers_df['district'] == selected_district) & (buyers_df['Crop'].str.lower() == selected_crop.lower())]
-st.dataframe(district_buyers, use_container_width=True)
+if os.path.exists("karnataka_crop_buyers.csv"):
+    buyers_df = pd.read_csv("karnataka_crop_buyers.csv")
+    district_buyers = buyers_df[(buyers_df['district'] == selected_district) & (buyers_df['Crop'].str.lower() == selected_crop.lower())]
+    st.dataframe(district_buyers, use_container_width=True)
+else:
+    st.warning("⚠️ Buyer information file not found.")
 
 # Footer
 st.markdown("---")
