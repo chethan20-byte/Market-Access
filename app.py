@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Aug  1 12:28:49 2025
-@author: chethan
+@author: chethans
 """
 
 # AI-Powered Market Access & Transport Optimizer for Farmers (Karnataka Version)
