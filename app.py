@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Aug  1 12:28:49 2025
-
-@author: reddy
+@author: chethan
 """
 
 # AI-Powered Market Access & Transport Optimizer for Farmers (Karnataka Version)
@@ -20,10 +19,12 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-# Load Data
+# Load Data (from split files)
 @st.cache_data
 def load_data():
-    df = pd.read_csv(r"C:\Users\chethan\Desktop\Market Access\mandi_prices_karnataka_daily\mandi_prices_karnataka_daily().csv")
+    part1 = pd.read_csv(r"C:\Users\chethan\Desktop\Market Access\split_part1.csv")
+    part2 = pd.read_csv(r"C:\Users\chethan\Desktop\Market Access\split_part2.csv")
+    df = pd.concat([part1, part2], ignore_index=True)
     df['date'] = pd.to_datetime(df['date'], format='%d-%m-%Y')
     return df
 
